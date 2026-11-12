@@ -16,6 +16,23 @@ function normalizePhone(phone) {
 }
 
 const $ = id => document.getElementById(id);
+async function finishReservation(id) {
+    if (!confirm("هل تريد إنهاء هذا الحجز؟")) return;
+
+    try {
+        await api("finish_reservation", {
+            pin: adminPin,
+            reservationId: id
+        });
+
+        alert("تم إنهاء الحجز وتحرير الغسالة");
+        await loadReservations();
+        await loadAdminMachines();
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
 const loginScreen = $("login-screen");
 const studentDashboard = $("student-dashboard");
 const adminDashboard = $("admin-dashboard");
