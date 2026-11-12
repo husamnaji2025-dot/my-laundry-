@@ -309,3 +309,41 @@ function logout() {
 
 $("logout").addEventListener("click", logout);
 $("admin-logout").addEventListener("click", logout);
+async function loadReservations() {
+    const container = $("reservations-list");
+    container.textContent = "جاري تحميل الحجوزات...";
+
+    try {
+        const result = await api("list_reservations", {
+            pin: adminPin
+        });
+
+        container.innerHTML = "";
+
+        if (!result.reservations || result.reservations.length === 0) {
+            container.textContent = "لا توجد حجوزات حتى الآن";
+            return;
+        }
+
+        result.reservations.forEach(r => {
+            const card = document.createElement("div");
+            card.className = "student-card";
+
+            card.textContent =
+                "رقم الحجز: " + r.id +
+                " | الطالب: " + (r.student_name || "غير معروف") +
+                " | الجهاز: " + (r.machine_name || "غير معروف") +
+                " | الحالة: " + r.status;
+
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        container.textContent = error.message;
+    }
+}
+
+$("refresh-reservations").addEventListener(
+    "click",
+    loadReservations
+);
