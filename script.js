@@ -93,8 +93,8 @@ $("login-button").addEventListener("click", async () => {
 
         // دخول الطالب
         const result = await api("student_login", {
-            phone: number
-        });
+    phone: normalizePhone(number)
+});
 
         currentStudent = result.student;
 
