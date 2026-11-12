@@ -7,6 +7,8 @@ const SUPABASE_KEY = "sb_publishable_IO9zpRCSMDdMU0wH0QuVeA_xkFzXDP_";
 
 let currentStudent = null;
 let adminPin = null;
+let currentPhone = null;
+
 let refreshTimer = null;
 let countdownTimer = null;
 let currentReservations = [];
@@ -72,6 +74,45 @@ const adminDashboard = $("admin-dashboard");
 const message = $("message");
 
 // ==========================================
+// تسجيل دخول الطالب
+// ==========================================
+
+async function loginStudent(phone, saveSession = true) {
+    const result = await api("student_login", {
+        phone: normalizePhone(phone)
+    });
+
+    currentStudent = result.student;
+    currentPhone = normalizePhone(phone);
+
+    currentReservations = result.reservations || [];
+
+    if (saveSession) {
+        localStorage.setItem("laundry_student_phone", currentPhone);
+    }
+
+    loginScreen.hidden = true;
+    adminDashboard.hidden = true;
+    studentDashboard.hidden = false;
+
+    $("welcome").textContent =
+        "مرحباً " + currentStudent.student_name;
+
+    $("credits").textContent = currentStudent.credits;
+
+    displayMachines(
+        result.machines || [],
+        "washers",
+        "irons",
+        currentReservations
+    );
+
+    await loadStudentSubscription();
+
+    startTimers();
+}
+
+// ==========================================
 // تسجيل الدخول
 // ==========================================
 
@@ -87,15 +128,16 @@ $("login-button").addEventListener("click", async () => {
     message.textContent = "جاري تسجيل الدخول...";
 
     try {
-        // دخول المدير
         if (number === "2007") {
             const pin = prompt("أدخل رمز المدير");
 
             if (!pin) return;
 
+            await api("list_students", { pin });
+
             adminPin = pin;
 
-            await api("list_students", { pin });
+            localStorage.removeItem("laundry_student_phone");
 
             loginScreen.hidden = true;
             studentDashboard.hidden = true;
@@ -104,34 +146,11 @@ $("login-button").addEventListener("click", async () => {
             message.textContent = "";
 
             await loadAdminData();
+
             return;
         }
 
-        // دخول الطالب
-        const result = await api("student_login", {
-            phone: normalizePhone(number)
-        });
-
-        currentStudent = result.student;
-        currentReservations = result.reservations || [];
-
-        loginScreen.hidden = true;
-        adminDashboard.hidden = true;
-        studentDashboard.hidden = false;
-
-        $("welcome").textContent =
-            "مرحباً " + currentStudent.student_name;
-
-        $("credits").textContent = currentStudent.credits;
-
-        displayMachines(
-            result.machines || [],
-            "washers",
-            "irons",
-            currentReservations
-        );
-
-        startTimers();
+        await loginStudent(number);
 
     } catch (error) {
         message.textContent = error.message;
@@ -139,6 +158,23 @@ $("login-button").addEventListener("click", async () => {
         $("login-button").disabled = false;
     }
 });
+
+// ==========================================
+// استعادة جلسة الطالب بعد تحديث الصفحة
+// ==========================================
+
+async function restoreStudentSession() {
+    const savedPhone = localStorage.getItem("laundry_student_phone");
+
+    if (!savedPhone) return;
+
+    try {
+        await loginStudent(savedPhone, false);
+    } catch (error) {
+        localStorage.removeItem("laundry_student_phone");
+        console.log("تعذرت استعادة الجلسة:", error.message);
+    }
+}
 
 // ==========================================
 // عرض الغسالات والمكاوي
@@ -170,7 +206,6 @@ function displayMachines(machines, washerId, ironId, reservations = []) {
         card.appendChild(title);
         card.appendChild(status);
 
-        // عداد الغسالة
         if (
             machine.type === "washer" &&
             machine.status === "occupied"
@@ -189,7 +224,6 @@ function displayMachines(machines, washerId, ironId, reservations = []) {
             }
         }
 
-        // زر الحجز للطالب
         if (
             washerId === "washers" &&
             machine.type === "washer" &&
@@ -218,7 +252,7 @@ function displayMachines(machines, washerId, ironId, reservations = []) {
 }
 
 // ==========================================
-// تحديث عداد الوقت
+// عداد الوقت
 // ==========================================
 
 function updateCountdowns() {
@@ -254,11 +288,12 @@ function startTimers() {
 
     refreshTimer = setInterval(async () => {
         await refreshStudentMachines();
+        await refreshStudentSubscription();
     }, 15000);
 }
 
 // ==========================================
-// تحديث حالة الغسالات للطالب
+// تحديث الغسالات
 // ==========================================
 
 async function refreshStudentMachines() {
@@ -317,6 +352,194 @@ async function bookMachine(machineId) {
 }
 
 // ==========================================
+// اشتراك الطالب
+// ==========================================
+
+async function loadStudentSubscription() {
+    if (!currentPhone) return;
+
+    const info = $("student-subscription-info");
+
+    info.textContent = "جاري تحميل بيانات الاشتراك...";
+
+    try {
+        const result = await api("student_subscription_status", {
+            phone: currentPhone
+        });
+
+        const settings = result.settings || {};
+        const subscription = result.subscription;
+        const request = result.request;
+
+        let html = `
+            <div>
+                <p>💰 سعر الباقة: ${settings.monthly_price ?? 0}</p>
+                <p>🧺 عدد الغسلات: ${settings.monthly_washes ?? 0}</p>
+                <p>📅 مدة الاشتراك: ${settings.duration_days ?? 30} يوم</p>
+            </div>
+        `;
+
+        if (subscription) {
+            html += `
+                <hr>
+                <h3>اشتراكك الحالي</h3>
+                <p>الحالة: نشط</p>
+                <p>الغسلات: ${subscription.total_washes}</p>
+                <p>تاريخ الانتهاء: ${
+                    new Date(subscription.end_date).toLocaleDateString()
+                }</p>
+            `;
+        } else if (request && request.status === "pending") {
+            html += `
+                <hr>
+                <p style="color:#d88900">
+                    ⏳ طلب اشتراكك قيد مراجعة المدير.
+                </p>
+            `;
+        } else if (request && request.status === "rejected") {
+            html += `
+                <hr>
+                <p style="color:#c0392b">
+                    تم رفض طلب الاشتراك السابق. يمكنك تقديم طلب جديد.
+                </p>
+            `;
+        } else {
+            html += `
+                <hr>
+                <p>لا يوجد لديك اشتراك نشط حالياً.</p>
+            `;
+        }
+
+        info.innerHTML = html;
+
+        const requestButton = $("student-request-subscription");
+
+        if (subscription || (request && request.status === "pending")) {
+            requestButton.hidden = true;
+        } else {
+            requestButton.hidden = false;
+        }
+
+    } catch (error) {
+        info.textContent = error.message;
+    }
+}
+
+async function refreshStudentSubscription() {
+    if (!currentStudent) return;
+
+    await loadStudentSubscription();
+}
+
+// ==========================================
+// فتح نموذج إرفاق السند
+// ==========================================
+
+$("student-request-subscription").addEventListener("click", () => {
+    $("student-receipt-area").hidden = false;
+    $("student-subscription-message").textContent = "";
+});
+
+// ==========================================
+// اختيار صورة السند
+// ==========================================
+
+$("receipt-picker").addEventListener("click", () => {
+    $("student-receipt").click();
+});
+
+$("student-receipt").addEventListener("change", () => {
+    const file = $("student-receipt").files[0];
+
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+        alert("حجم الصورة يجب ألا يتجاوز 5 ميجابايت");
+        $("student-receipt").value = "";
+        return;
+    }
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        alert("اختر صورة JPG أو PNG أو WEBP");
+        $("student-receipt").value = "";
+        return;
+    }
+
+    const preview = $("receipt-preview");
+
+    preview.src = URL.createObjectURL(file);
+    preview.hidden = false;
+
+    $("receipt-picker").textContent = "تم اختيار صورة السند ✓";
+});
+
+// ==========================================
+// إرسال طلب الاشتراك
+// ==========================================
+
+$("student-upload-receipt").addEventListener("click", async () => {
+    const file = $("student-receipt").files[0];
+
+    if (!file) {
+        alert("اختر صورة السند أولاً");
+        return;
+    }
+
+    const button = $("student-upload-receipt");
+
+    button.disabled = true;
+    button.textContent = "جاري إرسال السند...";
+
+    try {
+        const receiptBase64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = () => resolve(reader.result);
+
+            reader.onerror = () => {
+                reject(new Error("تعذرت قراءة الصورة"));
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        const result = await api("student_request_subscription", {
+            phone: currentPhone,
+            receiptBase64,
+            receiptType: file.type
+        });
+
+        $("student-subscription-message").textContent =
+            result.message || "تم إرسال طلب الاشتراك بنجاح";
+
+        $("student-subscription-message").style.color = "green";
+
+        $("student-receipt-area").hidden = true;
+        $("student-receipt").value = "";
+        $("receipt-preview").hidden = true;
+
+        await loadStudentSubscription();
+
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        button.disabled = false;
+        button.textContent = "إرسال السند";
+    }
+});
+
+// ==========================================
+// إلغاء إرفاق السند
+// ==========================================
+
+$("cancel-receipt").addEventListener("click", () => {
+    $("student-receipt-area").hidden = true;
+    $("student-receipt").value = "";
+    $("receipt-preview").hidden = true;
+    $("receipt-picker").textContent = "📤 اضغط هنا لاختيار الصورة";
+});
+
+// ==========================================
 // لوحة المدير
 // ==========================================
 
@@ -368,17 +591,13 @@ async function loadStudents() {
 $("add-student").addEventListener("click", async () => {
     const name = $("student-name").value.trim();
 
-    const phone = normalizePhone(
-        $("student-phone").value.trim()
-    );
+    const rawPhone = $("student-phone").value.trim();
 
-    const credits = Number(
-        $("student-credits").value
-    );
+    const credits = Number($("student-credits").value);
 
     if (
         !name ||
-        !phone ||
+        !rawPhone ||
         !Number.isInteger(credits) ||
         credits < 0
     ) {
@@ -390,7 +609,7 @@ $("add-student").addEventListener("click", async () => {
         await api("add_student", {
             pin: adminPin,
             name,
-            phone,
+            phone: normalizePhone(rawPhone),
             credits
         });
 
@@ -408,7 +627,7 @@ $("add-student").addEventListener("click", async () => {
 });
 
 // ==========================================
-// عرض الغسالات والمكاوي للمدير
+// أجهزة المدير
 // ==========================================
 
 async function loadAdminMachines() {
@@ -432,9 +651,7 @@ async function loadAdminMachines() {
 // ==========================================
 
 async function finishReservation(id) {
-    if (!confirm("هل تريد إنهاء هذا الحجز؟")) {
-        return;
-    }
+    if (!confirm("هل تريد إنهاء هذا الحجز؟")) return;
 
     try {
         await api("finish_reservation", {
@@ -453,7 +670,7 @@ async function finishReservation(id) {
 }
 
 // ==========================================
-// عرض الحجوزات
+// سجل الحجوزات
 // ==========================================
 
 async function loadReservations() {
@@ -470,10 +687,7 @@ async function loadReservations() {
 
         container.innerHTML = "";
 
-        if (
-            !result.reservations ||
-            result.reservations.length === 0
-        ) {
+        if (!result.reservations || result.reservations.length === 0) {
             container.textContent = "لا توجد حجوزات حتى الآن";
             return;
         }
@@ -485,20 +699,27 @@ async function loadReservations() {
 
             const info = document.createElement("div");
 
-            info.innerHTML = `
-                <p>رقم الحجز: ${r.id}</p>
-                <p>الطالب: ${r.students?.student_name || "غير معروف"}</p>
-                <p>الجهاز: ${r.machines?.name || "غير معروف"}</p>
-                <p>الحالة: ${r.status}</p>
-            `;
+            const p1 = document.createElement("p");
+            p1.textContent = "رقم الحجز: " + r.id;
 
+            const p2 = document.createElement("p");
+            p2.textContent =
+                "الطالب: " + (r.students?.student_name || "غير معروف");
+
+            const p3 = document.createElement("p");
+            p3.textContent =
+                "الجهاز: " + (r.machines?.name || "غير معروف");
+
+            const p4 = document.createElement("p");
+            p4.textContent = "الحالة: " + r.status;
+
+            info.append(p1, p2, p3, p4);
             card.appendChild(info);
 
             if (r.status === "active") {
                 const button = document.createElement("button");
 
                 button.textContent = "إنهاء الحجز";
-
                 button.onclick = () => finishReservation(r.id);
 
                 card.appendChild(button);
@@ -512,28 +733,10 @@ async function loadReservations() {
     }
 }
 
-// زر تحديث الحجوزات (مرة واحدة فقط)
 $("refresh-reservations").addEventListener(
     "click",
     loadReservations
 );
-
-// ==========================================
-// تسجيل الخروج
-// ==========================================
-
-function logout() {
-    clearInterval(refreshTimer);
-    clearInterval(countdownTimer);
-
-    currentStudent = null;
-    adminPin = null;
-
-    location.reload();
-}
-
-$("logout").addEventListener("click", logout);
-$("admin-logout").addEventListener("click", logout);
 
 // ==========================================
 // إدارة الاشتراكات
@@ -542,42 +745,33 @@ $("admin-logout").addEventListener("click", logout);
 async function loadSubscriptionPanel() {
     if (!adminPin) return;
 
-    let panel = $("subscription-panel");
-
-    if (!panel) {
-        panel = document.createElement("div");
-
-        panel.id = "subscription-panel";
-
-        adminDashboard.appendChild(panel);
-    }
+    const panel = $("subscription-panel");
 
     panel.innerHTML = `
-        <h2>إدارة الاشتراكات</h2>
+        <h2>💳 إدارة الاشتراكات</h2>
+
+        <h3>طلبات الاشتراك الجديدة</h3>
+
+        <button id="refresh-subscription-requests">
+            تحديث الطلبات
+        </button>
+
+        <div id="subscription-requests-list">
+            جاري تحميل الطلبات...
+        </div>
+
+        <hr>
 
         <h3>إعدادات الباقة الشهرية</h3>
 
-        <input
-            id="package-price"
-            type="number"
-            min="0"
-            placeholder="سعر الاشتراك"
-        >
+        <input id="package-price" type="number" min="0"
+            placeholder="سعر الاشتراك">
 
-        <input
-            id="package-washes"
-            type="number"
-            min="1"
-            placeholder="عدد الغسلات"
-        >
+        <input id="package-washes" type="number" min="1"
+            placeholder="عدد الغسلات">
 
-        <input
-            id="package-days"
-            type="number"
-            min="1"
-            value="30"
-            placeholder="مدة الاشتراك"
-        >
+        <input id="package-days" type="number" min="1"
+            placeholder="مدة الاشتراك">
 
         <button id="save-package">حفظ الباقة</button>
 
@@ -585,14 +779,10 @@ async function loadSubscriptionPanel() {
 
         <h3>البحث عن طالب</h3>
 
-        <input
-            id="subscription-search"
-            placeholder="اسم الطالب أو رقم الهاتف"
-        >
+        <input id="subscription-search"
+            placeholder="اسم الطالب أو رقم الهاتف">
 
-        <button id="search-subscription-student">
-            بحث
-        </button>
+        <button id="search-subscription-student">بحث</button>
 
         <div id="subscription-search-results"></div>
 
@@ -600,9 +790,7 @@ async function loadSubscriptionPanel() {
 
         <h3>الاشتراكات الحالية</h3>
 
-        <button id="refresh-subscriptions">
-            تحديث الاشتراكات
-        </button>
+        <button id="refresh-subscriptions">تحديث الاشتراكات</button>
 
         <div id="subscriptions-list"></div>
 
@@ -610,9 +798,7 @@ async function loadSubscriptionPanel() {
 
         <h3>سجل المدفوعات</h3>
 
-        <button id="refresh-payments">
-            عرض المدفوعات
-        </button>
+        <button id="refresh-payments">عرض المدفوعات</button>
 
         <div id="payments-list"></div>
     `;
@@ -628,12 +814,138 @@ async function loadSubscriptionPanel() {
     $("refresh-payments").onclick =
         loadSubscriptionPayments;
 
+    $("refresh-subscription-requests").onclick =
+        loadSubscriptionRequests;
+
     await loadSubscriptionSettings();
+    await loadSubscriptionRequests();
     await loadSubscriptions();
 }
 
 // ==========================================
-// تحميل إعدادات الباقة
+// طلبات الاشتراك للمدير
+// ==========================================
+
+async function loadSubscriptionRequests() {
+    const container = $("subscription-requests-list");
+
+    if (!container) return;
+
+    container.textContent = "جاري تحميل الطلبات...";
+
+    try {
+        const result = await api("list_subscription_requests", {
+            pin: adminPin
+        });
+
+        container.innerHTML = "";
+
+        const requests = result.requests || [];
+
+        if (requests.length === 0) {
+            container.textContent = "لا توجد طلبات اشتراك جديدة";
+            return;
+        }
+
+        requests.forEach(request => {
+            const card = document.createElement("div");
+
+            card.className = "student-card";
+
+            const title = document.createElement("h3");
+
+            title.textContent =
+                request.students?.student_name || "طالب";
+
+            const phone = document.createElement("p");
+
+            phone.textContent =
+                "رقم الهاتف: " +
+                (request.students?.phone || "غير معروف");
+
+            const price = document.createElement("p");
+
+            price.textContent = "السعر: " + request.price;
+
+            const washes = document.createElement("p");
+
+            washes.textContent = "الغسلات: " + request.total_washes;
+
+            const status = document.createElement("p");
+
+            status.textContent =
+                "الحالة: " + request.status;
+
+            card.append(title, phone, price, washes, status);
+
+            if (request.receipt_url) {
+                const link = document.createElement("a");
+
+                link.href = request.receipt_url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = "📷 عرض سند الدفع";
+
+                card.appendChild(link);
+            }
+
+            if (request.status === "pending") {
+                const approve = document.createElement("button");
+
+                approve.textContent = "قبول الطلب";
+                approve.onclick = () => {
+                    reviewSubscriptionRequest(request.id, "approved");
+                };
+
+                const reject = document.createElement("button");
+
+                reject.textContent = "رفض الطلب";
+                reject.onclick = () => {
+                    reviewSubscriptionRequest(request.id, "rejected");
+                };
+
+                card.append(approve, reject);
+            }
+
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        container.textContent = error.message;
+    }
+}
+
+// ==========================================
+// قبول أو رفض طلب الاشتراك
+// ==========================================
+
+async function reviewSubscriptionRequest(requestId, decision) {
+    const question = decision === "approved"
+        ? "هل تأكدت من صحة السند وتريد قبول الطلب؟"
+        : "هل تريد رفض طلب الاشتراك؟";
+
+    if (!confirm(question)) return;
+
+    try {
+        const result = await api("review_subscription_request", {
+            pin: adminPin,
+            requestId,
+            decision
+        });
+
+        alert(result.message || "تم تنفيذ العملية");
+
+        await loadSubscriptionRequests();
+        await loadSubscriptions();
+        await loadStudents();
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// ==========================================
+// إعدادات الباقة
 // ==========================================
 
 async function loadSubscriptionSettings() {
@@ -652,10 +964,6 @@ async function loadSubscriptionSettings() {
         alert(error.message);
     }
 }
-
-// ==========================================
-// حفظ إعدادات الباقة
-// ==========================================
 
 async function saveSubscriptionPackage() {
     const price = Number($("package-price").value);
@@ -723,24 +1031,10 @@ async function searchSubscriptionStudent() {
 
             card.className = "student-card";
 
-            const info = document.createElement("p");
-
-            info.textContent =
+            card.textContent =
                 student.student_name +
-                " | " +
-                student.phone +
-                " | الرصيد: " +
-                student.credits;
-
-            const button = document.createElement("button");
-
-            button.textContent = "إنشاء اشتراك";
-
-            button.onclick = () => {
-                createStudentSubscription(student);
-            };
-
-            card.append(info, button);
+                " | " + student.phone +
+                " | الرصيد: " + student.credits;
 
             container.appendChild(card);
         });
@@ -751,49 +1045,13 @@ async function searchSubscriptionStudent() {
 }
 
 // ==========================================
-// إنشاء اشتراك لطالب مسجل
-// ==========================================
-
-async function createStudentSubscription(student) {
-    const paid = prompt(
-        "أدخل المبلغ المدفوع الآن، أو اكتب 0 إذا لم يدفع"
-    );
-
-    if (paid === null) return;
-
-    const paidAmount = Number(paid);
-
-    if (
-        !Number.isFinite(paidAmount) ||
-        paidAmount < 0
-    ) {
-        alert("المبلغ غير صحيح");
-        return;
-    }
-
-    try {
-        await api("create_subscription", {
-            pin: adminPin,
-            studentId: student.id,
-            paid_amount: paidAmount
-        });
-
-        alert("تم إنشاء الاشتراك وإضافة الغسلات للطالب");
-
-        await loadStudents();
-        await loadSubscriptions();
-
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-// ==========================================
-// عرض الاشتراكات
+// عرض الاشتراكات الحالية
 // ==========================================
 
 async function loadSubscriptions() {
     const container = $("subscriptions-list");
+
+    if (!container) return;
 
     container.textContent = "جاري التحميل...";
 
@@ -832,18 +1090,6 @@ async function loadSubscriptions() {
 
             card.appendChild(info);
 
-            if (remaining > 0) {
-                const button = document.createElement("button");
-
-                button.textContent = "تسديد وإرفاق السند";
-
-                button.onclick = () => {
-                    addSubscriptionPayment(s);
-                };
-
-                card.appendChild(button);
-            }
-
             container.appendChild(card);
         });
 
@@ -853,93 +1099,13 @@ async function loadSubscriptions() {
 }
 
 // ==========================================
-// تسجيل دفعة وإرفاق صورة السند
-// ==========================================
-
-async function addSubscriptionPayment(subscription) {
-    const remaining =
-        Number(subscription.price) -
-        Number(subscription.paid_amount);
-
-    const amount = prompt(
-        "المبلغ المتبقي: " +
-        remaining +
-        "\nأدخل مبلغ التسديد:"
-    );
-
-    if (amount === null) return;
-
-    const value = Number(amount);
-
-    if (
-        !Number.isFinite(value) ||
-        value <= 0 ||
-        value > remaining
-    ) {
-        alert("المبلغ غير صحيح");
-        return;
-    }
-
-    const input = document.createElement("input");
-
-    input.type = "file";
-    input.accept = "image/jpeg,image/png,image/webp";
-
-    input.onchange = async () => {
-        const file = input.files[0];
-
-        if (!file) return;
-
-        if (file.size > 5 * 1024 * 1024) {
-            alert("حجم الصورة يجب ألا يتجاوز 5 ميجابايت");
-            return;
-        }
-
-        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-            alert("اختر صورة بصيغة JPG أو PNG أو WEBP");
-            return;
-        }
-
-        try {
-            const receiptBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-
-                reader.onload = () => resolve(reader.result);
-
-                reader.onerror = () => {
-                    reject(new Error("تعذرت قراءة صورة السند"));
-                };
-
-                reader.readAsDataURL(file);
-            });
-
-            await api("add_subscription_payment", {
-                pin: adminPin,
-                subscriptionId: subscription.id,
-                amount: value,
-                receiptBase64,
-                receiptType: file.type
-            });
-
-            alert("تم تسجيل الدفعة وحفظ صورة السند بنجاح");
-
-            await loadSubscriptions();
-            await loadSubscriptionPayments();
-
-        } catch (error) {
-            alert(error.message);
-        }
-    };
-
-    input.click();
-}
-
-// ==========================================
 // سجل المدفوعات
 // ==========================================
 
 async function loadSubscriptionPayments() {
     const container = $("payments-list");
+
+    if (!container) return;
 
     container.textContent = "جاري التحميل...";
 
@@ -991,5 +1157,27 @@ async function loadSubscriptionPayments() {
 }
 
 // ==========================================
-// نهاية الملف
+// تسجيل الخروج
 // ==========================================
+
+function logout() {
+    clearInterval(refreshTimer);
+    clearInterval(countdownTimer);
+
+    localStorage.removeItem("laundry_student_phone");
+
+    currentStudent = null;
+    currentPhone = null;
+    adminPin = null;
+
+    location.reload();
+}
+
+$("logout").addEventListener("click", logout);
+$("admin-logout").addEventListener("click", logout);
+
+// ==========================================
+// استعادة الجلسة عند فتح الصفحة
+// ==========================================
+
+restoreStudentSession();
