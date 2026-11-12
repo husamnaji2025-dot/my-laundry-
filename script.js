@@ -55,7 +55,7 @@ async function api(action, data = {}) {
 
 $("login-button").addEventListener("click", async () => {
 
-    const number = $("student-number").value.trim();
+    const phone = normalizePhone($("student-phone").value.trim());
 
     if (!number) {
         message.textContent = "أدخل رقم الهاتف";
