@@ -10,7 +10,15 @@ const SUPABASE_KEY = "sb_publishable_IO9zpRCSMDdMU0wH0QuVeA_xkFzXDP_";
 
 let currentStudent = null;
 let adminPin = null;
+function normalizePhone(phone) {
+    phone = phone.replace(/[\s-]/g, "");
 
+    if (phone.startsWith("+")) return phone;
+    if (phone.startsWith("967")) return "+" + phone;
+    if (phone.startsWith("0")) phone = phone.substring(1);
+
+    return "+967" + phone;
+}
 const $ = (id) => document.getElementById(id);
 
 const loginScreen = $("login-screen");
