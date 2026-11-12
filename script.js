@@ -1,50 +1,70 @@
 // =====================================
-// مغسلتي - My Laundry
-// تسجيل الدخول برقم الطالب فقط
+// مغسلتي - Supabase API
 // =====================================
 
-const db = firebase.database();
-
-// عناصر الصفحة
-const loginScreen = document.getElementById("login-screen");
-const studentDashboard = document.getElementById("student-dashboard");
-const adminDashboard = document.getElementById("admin-dashboard");
-
-const message = document.getElementById("message");
-const studentNumberInput = document.getElementById("student-number");
-const loginButton = document.getElementById("login-button");
-
-// رقم المدير المؤقت
-// غيّره إلى رقم خاص بك
-const ADMIN_NUMBER = "2007";
+const API_URL =
+"https://pathkcnviuwqaljpvjbn.supabase.co/functions/v1/super-function";
 
 let currentStudent = null;
-let currentStudentNumber = null;
+let adminPin = null;
 
+const $ = (id) => document.getElementById(id);
+
+const loginScreen = $("login-screen");
+const studentDashboard = $("student-dashboard");
+const adminDashboard = $("admin-dashboard");
+const message = $("message");
+
+// الاتصال بالخادم
+async function api(action, data = {}) {
+    const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ action, ...data })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || "حدث خطأ");
+    }
+
+    return result;
+}
 
 // =====================================
 // تسجيل الدخول
 // =====================================
 
-loginButton.addEventListener("click", async function () {
+$("login-button").addEventListener("click", async () => {
 
-    const number = studentNumberInput.value.trim();
+    const number = $("student-number").value.trim();
 
     if (!number) {
-        message.textContent = "أدخل رقم الطالب أولاً";
+        message.textContent = "أدخل رقم الهاتف";
         return;
     }
 
-    loginButton.disabled = true;
+    $("login-button").disabled = true;
     message.textContent = "جاري تسجيل الدخول...";
 
     try {
 
         // دخول المدير
-        if (number === ADMIN_NUMBER) {
+        if (number === "2007") {
 
-            currentStudent = null;
-            currentStudentNumber = number;
+            const pin = prompt("أدخل رمز المدير");
+
+            if (!pin) {
+                message.textContent = "تم إلغاء الدخول";
+                return;
+            }
+
+            adminPin = pin;
+
+            await api("list_students", { pin: adminPin });
 
             loginScreen.hidden = true;
             studentDashboard.hidden = true;
@@ -52,279 +72,176 @@ loginButton.addEventListener("click", async function () {
 
             message.textContent = "";
 
-            loadAdminData();
-
+            await loadAdminData();
             return;
         }
 
-        // البحث عن الطالب في قاعدة البيانات
-        const snapshot = await db.ref("students/" + number).once("value");
+        // دخول الطالب
+        const result = await api("student_login", {
+            phone: number
+        });
 
-        if (!snapshot.exists()) {
-            message.textContent = "رقم الطالب غير مسجل";
-            return;
-        }
-
-        currentStudent = snapshot.val();
-        currentStudentNumber = number;
+        currentStudent = result.student;
 
         loginScreen.hidden = true;
         adminDashboard.hidden = true;
         studentDashboard.hidden = false;
 
-        document.getElementById("welcome").textContent =
-            "مرحباً " + (currentStudent.name || "بالطالب");
+        $("welcome").textContent =
+            "مرحباً " + currentStudent.student_name;
 
-        document.getElementById("credits").textContent =
-            currentStudent.credits || 0;
+        $("credits").textContent = currentStudent.credits;
 
-        loadMachines();
+        displayMachines(result.machines, "washers", "irons");
 
     } catch (error) {
 
-        message.textContent = "حدث خطأ في الاتصال بقاعدة البيانات";
-
-        console.error(error);
+        message.textContent = error.message;
 
     } finally {
 
-        loginButton.disabled = false;
+        $("login-button").disabled = false;
 
     }
 
 });
 
-
 // =====================================
-// عرض الغسالات والمكاوي للطالب
+// عرض الأجهزة
 // =====================================
 
-function loadMachines() {
+function displayMachines(machines, washerId, ironId) {
 
-    db.ref("machines/washers").on("value", function (snapshot) {
+    $(washerId).innerHTML = "";
+    $(ironId).innerHTML = "";
 
-        const container = document.getElementById("washers");
+    machines.forEach(machine => {
 
-        container.innerHTML = "";
+        const card = document.createElement("div");
+        card.className = "machine-card";
 
-        snapshot.forEach(function (item) {
+        card.textContent =
+            machine.name + " : " +
+            (machine.status === "occupied" ? "مشغولة" : "متاحة");
 
-            const machine = item.val();
-
-            const card = document.createElement("div");
-
-            card.className = "machine-card";
-
-            card.textContent =
-                (machine.name || item.key) + " : " +
-                (machine.status === "busy" ? "مشغولة" : "متاحة");
-
-            container.appendChild(card);
-
-        });
-
-    });
-
-
-    db.ref("machines/irons").on("value", function (snapshot) {
-
-        const container = document.getElementById("irons");
-
-        container.innerHTML = "";
-
-        snapshot.forEach(function (item) {
-
-            const iron = item.val();
-
-            const card = document.createElement("div");
-
-            card.className = "machine-card";
-
-            card.textContent =
-                (iron.name || item.key) + " : " +
-                (iron.status === "busy" ? "مشغولة" : "متاحة");
-
-            container.appendChild(card);
-
-        });
+        if (machine.type === "washer") {
+            $(washerId).appendChild(card);
+        } else {
+            $(ironId).appendChild(card);
+        }
 
     });
 
 }
-
 
 // =====================================
 // لوحة المدير
 // =====================================
 
-function loadAdminData() {
+async function loadAdminData() {
 
-    loadStudents();
-    loadAdminMachines();
+    await loadStudents();
+    await loadAdminMachines();
 
 }
 
-
-// إضافة طالب
-document.getElementById("add-student").addEventListener("click", async function () {
-
-    const name = document.getElementById("student-name").value.trim();
-
-    const phone = document.getElementById("student-phone").value.trim();
-
-    const credits = Number(document.getElementById("student-credits").value);
-
-    if (!name || !phone || !Number.isInteger(credits) || credits < 0) {
-
-        alert("أدخل اسم الطالب ورقمه ورصيد الغسلات بشكل صحيح");
-
-        return;
-
-    }
+// عرض الطلاب
+async function loadStudents() {
 
     try {
 
-        const snapshot = await db.ref("students/" + phone).once("value");
-
-        if (snapshot.exists()) {
-
-            alert("هذا الرقم مسجل مسبقاً");
-
-            return;
-
-        }
-
-        await db.ref("students/" + phone).set({
-
-            name: name,
-
-            phone: phone,
-
-            credits: credits,
-
-            createdAt: Date.now()
-
+        const result = await api("list_students", {
+            pin: adminPin
         });
 
-        alert("تمت إضافة الطالب بنجاح");
-
-        document.getElementById("student-name").value = "";
-        document.getElementById("student-phone").value = "";
-        document.getElementById("student-credits").value = "";
-
-        loadStudents();
-
-    } catch (error) {
-
-        alert("تعذرت إضافة الطالب");
-
-        console.error(error);
-
-    }
-
-});
-
-
-// عرض الطلاب
-function loadStudents() {
-
-    db.ref("students").on("value", function (snapshot) {
-
-        const container = document.getElementById("students-list");
-
+        const container = $("students-list");
         container.innerHTML = "";
 
-        snapshot.forEach(function (item) {
-
-            const student = item.val();
+        result.students.forEach(student => {
 
             const card = document.createElement("div");
-
             card.className = "student-card";
 
             card.textContent =
-                student.name + " | رقم: " + student.phone +
+                student.student_name +
+                " | رقم: " + student.phone +
                 " | الغسلات: " + student.credits;
 
             container.appendChild(card);
 
         });
 
-    });
+    } catch (error) {
+        alert(error.message);
+    }
 
 }
 
+// إضافة طالب
+$("add-student").addEventListener("click", async () => {
 
-// عرض الأجهزة في لوحة المدير
-function loadAdminMachines() {
+    const name = $("student-name").value.trim();
+    const phone = $("student-phone").value.trim();
+    const credits = Number($("student-credits").value);
 
-    db.ref("machines/washers").on("value", function (snapshot) {
+    if (!name || !phone ||
+        !Number.isInteger(credits) || credits < 0) {
 
-        const container = document.getElementById("admin-washers");
+        alert("تأكد من إدخال بيانات الطالب بشكل صحيح");
+        return;
+    }
 
-        container.innerHTML = "";
+    try {
 
-        snapshot.forEach(function (item) {
-
-            const machine = item.val();
-
-            const card = document.createElement("div");
-
-            card.textContent =
-                (machine.name || item.key) + " - " +
-                (machine.status === "busy" ? "مشغولة" : "متاحة");
-
-            container.appendChild(card);
-
+        await api("add_student", {
+            pin: adminPin,
+            name,
+            phone,
+            credits
         });
 
-    });
+        alert("تمت إضافة الطالب بنجاح");
 
+        $("student-name").value = "";
+        $("student-phone").value = "";
+        $("student-credits").value = "";
 
-    db.ref("machines/irons").on("value", function (snapshot) {
+        await loadStudents();
 
-        const container = document.getElementById("admin-irons");
+    } catch (error) {
+        alert(error.message);
+    }
 
-        container.innerHTML = "";
+});
 
-        snapshot.forEach(function (item) {
+// عرض الأجهزة للمدير
+async function loadAdminMachines() {
 
-            const iron = item.val();
+    try {
 
-            const card = document.createElement("div");
+        const result = await api("get_machines");
 
-            card.textContent =
-                (iron.name || item.key) + " - " +
-                (iron.status === "busy" ? "مشغولة" : "متاحة");
+        displayMachines(
+            result.machines,
+            "admin-washers",
+            "admin-irons"
+        );
 
-            container.appendChild(card);
-
-        });
-
-    });
+    } catch (error) {
+        alert(error.message);
+    }
 
 }
-
 
 // =====================================
 // تسجيل الخروج
 // =====================================
 
-document.getElementById("logout").addEventListener("click", function () {
-
+function logout() {
     currentStudent = null;
-    currentStudentNumber = null;
-
+    adminPin = null;
     location.reload();
+}
 
-});
-
-
-document.getElementById("admin-logout").addEventListener("click", function () {
-
-    currentStudent = null;
-    currentStudentNumber = null;
-
-    location.reload();
-
-});
+$("logout").addEventListener("click", logout);
+$("admin-logout").addEventListener("click", logout);
