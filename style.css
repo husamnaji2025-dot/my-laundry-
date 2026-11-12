@@ -1,0 +1,93 @@
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: #f1f5f9;
+    color: #1e293b;
+    direction: rtl;
+}
+
+.app {
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+}
+
+header {
+    background: #087f8c;
+    color: white;
+    text-align: center;
+    padding: 25px 15px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    margin: 0 0 10px;
+    font-size: 30px;
+}
+
+header p {
+    margin: 0;
+    font-size: 15px;
+}
+
+main,
+#student-dashboard {
+    background: white;
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px #0000000d;
+}
+
+h2, h3 {
+    color: #087f8c;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    margin: 12px 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #087f8c;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:active {
+    opacity: 0.8;
+}
+
+#message {
+    text-align: center;
+    color: #dc2626;
+    margin-top: 15px;
+}
+
+#credits {
+    background: #e0f2f1;
+    color: #087f8c;
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 35px;
+}
+
+[hidden] {
+    display: none !important;
+}

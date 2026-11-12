@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مغسلتي | My Laundry</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header>
+            <h1>🧺 مغسلتي</h1>
+            <p>نظام إدارة الغسيل للسكن الطلابي</p>
+        </header>
+
+        <main id="login-screen">
+
+            <h2>مرحباً بك</h2>
+            <p>سجل دخولك باستخدام رقم هاتفك</p>
+
+            <input
+                type="tel"
+                id="phone"
+                placeholder="+9677XXXXXXXX"
+                dir="ltr"
+            >
+
+            <div id="recaptcha-container"></div>
+
+            <button id="send-code">
+                إرسال رمز التحقق
+            </button>
+
+            <div id="verification-section" hidden>
+                <input
+                    type="text"
+                    id="verification-code"
+                    placeholder="أدخل رمز التحقق"
+                    inputmode="numeric"
+                >
+
+                <button id="verify-code">
+                    تأكيد الدخول
+                </button>
+            </div>
+
+            <p id="message"></p>
+
+        </main>
+
+        <section id="student-dashboard" hidden>
+            <h2>لوحة الطالب</h2>
+            <p id="welcome"></p>
+            <p>رصيد الغسلات المتبقي:</p>
+            <h2 id="credits">0</h2>
+
+            <h3>الغسالات</h3>
+            <div id="washers"></div>
+
+            <h3>المكاوي</h3>
+            <div id="irons"></div>
+
+            <button id="logout">تسجيل الخروج</button>
+        </section>
+<!-- لوحة المدير -->
+<section id="admin-dashboard" hidden>
+
+    <h2>لوحة إدارة مغسلتي 🛠️</h2>
+
+    <h3>إضافة طالب جديد</h3>
+
+    <input
+        type="text"
+        id="student-name"
+        placeholder="اسم الطالب"
+    >
+
+    <input
+        type="tel"
+        id="student-phone"
+        placeholder="+9677XXXXXXXX"
+        dir="ltr"
+    >
+
+    <input
+        type="number"
+        id="student-credits"
+        placeholder="عدد الغسلات"
+        min="0"
+    >
+
+    <button id="add-student">
+        إضافة الطالب
+    </button>
+
+    <hr>
+
+    <h3>إدارة الأجهزة</h3>
+
+    <div id="admin-washers"></div>
+
+    <div id="admin-irons"></div>
+
+    <hr>
+
+    <h3>الطلاب المسجلون</h3>
+
+    <div id="students-list"></div>
+
+    <button id="admin-logout">
+        تسجيل خروج المدير
+    </button>
+
+</section>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
