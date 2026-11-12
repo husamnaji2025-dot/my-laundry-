@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
 </head>
 
 <body>
+
 <div class="app">
 
     <header>
@@ -15,69 +17,170 @@
         <p>نظام إدارة الغسيل للسكن الطلابي</p>
     </header>
 
+    <!-- تسجيل الدخول -->
     <main id="login-screen">
+
         <h2>مرحباً بك في مغسلتي 🧺</h2>
+
         <p>أدخل رقم هاتفك للدخول</p>
-        <input type="text" id="student-number"
-               placeholder="رقم الهاتف" inputmode="numeric" dir="ltr">
-        <button id="login-button" type="button">دخول</button>
+
+        <input
+            type="text"
+            id="student-number"
+            placeholder="رقم الهاتف"
+            inputmode="numeric"
+            dir="ltr"
+        >
+
+        <button id="login-button" type="button">
+            دخول
+        </button>
+
         <p id="message"></p>
+
     </main>
 
+    <!-- واجهة الطالب -->
     <section id="student-dashboard" hidden>
+
         <h2>لوحة الطالب</h2>
+
         <p id="welcome"></p>
-        <p>رصيد الغسلات المتبقي:</p>
+
+        <h3>رصيد الغسلات المتبقي</h3>
+
         <h2 id="credits">0</h2>
 
+        <hr>
+
+        <!-- اشتراكي -->
+        <section id="student-subscription">
+
+            <h2>💳 اشتراكي</h2>
+
+            <div id="student-subscription-info">
+                جاري تحميل بيانات الاشتراك...
+            </div>
+
+            <div id="student-subscription-actions">
+
+                <button
+                    id="student-request-subscription"
+                    type="button"
+                >
+                    طلب اشتراك جديد
+                </button>
+
+                <input
+                    type="file"
+                    id="student-receipt"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                >
+
+                <button
+                    id="student-upload-receipt"
+                    type="button"
+                    hidden
+                >
+                    إرفاق سند الدفع
+                </button>
+
+            </div>
+
+            <div id="student-subscription-message"></div>
+
+        </section>
+
+        <hr>
+
+        <!-- الغسالات -->
         <h3>الغسالات</h3>
+
         <div id="washers"></div>
 
+        <!-- المكاوي -->
         <h3>المكاوي</h3>
+
         <div id="irons"></div>
 
-        <button id="logout" type="button">تسجيل الخروج</button>
+        <button id="logout" type="button">
+            تسجيل الخروج
+        </button>
+
     </section>
 
+    <!-- لوحة المدير -->
     <section id="admin-dashboard" hidden>
+
         <h2>لوحة إدارة مغسلتي 🛠️</h2>
 
         <h3>إضافة طالب جديد</h3>
-        <input type="text" id="student-name" placeholder="اسم الطالب">
-        <input type="tel" id="student-phone"
-               placeholder="+9677XXXXXXXX" dir="ltr">
-        <input type="number" id="student-credits"
-               placeholder="عدد الغسلات" min="0">
-        <button id="add-student" type="button">إضافة الطالب</button>
+
+        <input
+            type="text"
+            id="student-name"
+            placeholder="اسم الطالب"
+        >
+
+        <input
+            type="tel"
+            id="student-phone"
+            placeholder="+9677XXXXXXXX"
+            dir="ltr"
+        >
+
+        <input
+            type="number"
+            id="student-credits"
+            placeholder="عدد الغسلات"
+            min="0"
+        >
+
+        <button id="add-student" type="button">
+            إضافة الطالب
+        </button>
 
         <hr>
 
         <h3>إدارة الأجهزة</h3>
+
         <div id="admin-washers"></div>
+
         <div id="admin-irons"></div>
 
         <hr>
 
         <h3>الطلاب المسجلون</h3>
+
         <div id="students-list"></div>
 
         <hr>
 
         <h3>📋 سجل الحجوزات</h3>
+
         <button id="refresh-reservations" type="button">
             تحديث سجل الحجوزات
         </button>
+
         <div id="reservations-list">
             اضغط تحديث لعرض الحجوزات
         </div>
 
+        <hr>
+
+        <!-- إدارة الاشتراكات -->
+        <div id="subscription-panel"></div>
+
         <button id="admin-logout" type="button">
             تسجيل خروج المدير
         </button>
+
     </section>
 
 </div>
 
-<script src="script.js?v=4"></script>
+<script src="script.js?v=5"></script>
+
 </body>
 </html>
