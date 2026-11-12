@@ -5,6 +5,9 @@
 const API_URL =
 "https://pathkcnviuwqaljpvjbn.supabase.co/functions/v1/super-function";
 
+// ضع مفتاح Publishable من Supabase هنا
+const SUPABASE_KEY = "ضع_مفتاح_Publishable_هنا";
+
 let currentStudent = null;
 let adminPin = null;
 
@@ -17,11 +20,15 @@ const message = $("message");
 
 // الاتصال بالخادم
 async function api(action, data = {}) {
+
     const response = await fetch(API_URL, {
         method: "POST",
+
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY
         },
+
         body: JSON.stringify({ action, ...data })
     });
 
@@ -177,7 +184,10 @@ async function loadStudents() {
 
 }
 
+// =====================================
 // إضافة طالب
+// =====================================
+
 $("add-student").addEventListener("click", async () => {
 
     const name = $("student-name").value.trim();
@@ -214,7 +224,10 @@ $("add-student").addEventListener("click", async () => {
 
 });
 
+// =====================================
 // عرض الأجهزة للمدير
+// =====================================
+
 async function loadAdminMachines() {
 
     try {
@@ -238,9 +251,12 @@ async function loadAdminMachines() {
 // =====================================
 
 function logout() {
+
     currentStudent = null;
     adminPin = null;
+
     location.reload();
+
 }
 
 $("logout").addEventListener("click", logout);
