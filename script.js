@@ -6,7 +6,7 @@ const API_URL =
 "https://pathkcnviuwqaljpvjbn.supabase.co/functions/v1/super-function";
 
 // ضع مفتاح Publishable من Supabase هنا
-const SUPABASE_KEY = "ضع_مفتاح_Publishable_هنا";
+const SUPABASE_KEY = "sb_publishable_IO9zpRCSMDdMU0wH0QuVeA_xkFzXDP_";
 
 let currentStudent = null;
 let adminPin = null;
