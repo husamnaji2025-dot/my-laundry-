@@ -5,11 +5,11 @@
 const API_URL =
 "https://pathkcnviuwqaljpvjbn.supabase.co/functions/v1/super-function";
 
-// ضع مفتاح Publishable من Supabase هنا
 const SUPABASE_KEY = "sb_publishable_IO9zpRCSMDdMU0wH0QuVeA_xkFzXDP_";
 
 let currentStudent = null;
 let adminPin = null;
+
 function normalizePhone(phone) {
     phone = phone.replace(/[\s-]/g, "");
 
@@ -19,6 +19,7 @@ function normalizePhone(phone) {
 
     return "+967" + phone;
 }
+
 const $ = (id) => document.getElementById(id);
 
 const loginScreen = $("login-screen");
@@ -26,17 +27,18 @@ const studentDashboard = $("student-dashboard");
 const adminDashboard = $("admin-dashboard");
 const message = $("message");
 
+// =====================================
 // الاتصال بالخادم
+// =====================================
+
 async function api(action, data = {}) {
 
     const response = await fetch(API_URL, {
         method: "POST",
-
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY
         },
-
         body: JSON.stringify({ action, ...data })
     });
 
@@ -55,7 +57,7 @@ async function api(action, data = {}) {
 
 $("login-button").addEventListener("click", async () => {
 
-    const phone = normalizePhone($("student-phone").value.trim());
+    const number = $("student-number").value.trim();
 
     if (!number) {
         message.textContent = "أدخل رقم الهاتف";
@@ -93,8 +95,8 @@ $("login-button").addEventListener("click", async () => {
 
         // دخول الطالب
         const result = await api("student_login", {
-    phone: normalizePhone(number)
-});
+            phone: normalizePhone(number)
+        });
 
         currentStudent = result.student;
 
@@ -135,33 +137,38 @@ function displayMachines(machines, washerId, ironId) {
         const card = document.createElement("div");
         card.className = "machine-card";
 
+        const title = document.createElement("h3");
+        title.textContent = machine.name;
+
         const status = document.createElement("p");
 
         status.textContent =
             machine.status === "occupied" ? "مشغولة" : "متاحة";
 
-        card.innerHTML = `<h3>${machine.name}</h3>`;
+        card.appendChild(title);
         card.appendChild(status);
 
+        // زر حجز الغسالة للطالب فقط
+        if (
+            washerId === "washers" &&
+            machine.type === "washer" &&
+            machine.status === "available" &&
+            currentStudent
+        ) {
+
+            const button = document.createElement("button");
+
+            button.textContent = "احجز الغسالة";
+
+            button.addEventListener("click", () => {
+                bookMachine(machine.id);
+            });
+
+            card.appendChild(button);
+        }
+
         if (machine.type === "washer") {
-
-            if (
-                washerId === "washers" &&
-                machine.status === "available" &&
-                currentStudent
-            ) {
-                const button = document.createElement("button");
-                button.textContent = "احجز الغسالة";
-
-                button.addEventListener("click", () => {
-                    bookMachine(machine.id);
-                });
-
-                card.appendChild(button);
-            }
-
             $(washerId).appendChild(card);
-
         } else {
             $(ironId).appendChild(card);
         }
@@ -177,6 +184,11 @@ function displayMachines(machines, washerId, ironId) {
 async function bookMachine(machineId) {
 
     if (!currentStudent) return;
+
+    if (currentStudent.credits <= 0) {
+        alert("رصيدك لا يكفي للحجز");
+        return;
+    }
 
     if (!confirm("هل تريد تأكيد حجز هذه الغسالة؟")) {
         return;
@@ -210,6 +222,7 @@ async function bookMachine(machineId) {
     }
 
 }
+
 // =====================================
 // لوحة المدير
 // =====================================
@@ -221,7 +234,10 @@ async function loadAdminData() {
 
 }
 
+// =====================================
 // عرض الطلاب
+// =====================================
+
 async function loadStudents() {
 
     try {
@@ -248,7 +264,9 @@ async function loadStudents() {
         });
 
     } catch (error) {
+
         alert(error.message);
+
     }
 
 }
@@ -260,7 +278,11 @@ async function loadStudents() {
 $("add-student").addEventListener("click", async () => {
 
     const name = $("student-name").value.trim();
-    const phone = $("student-phone").value.trim();
+
+    const phone = normalizePhone(
+        $("student-phone").value.trim()
+    );
+
     const credits = Number($("student-credits").value);
 
     if (!name || !phone ||
@@ -288,7 +310,9 @@ $("add-student").addEventListener("click", async () => {
         await loadStudents();
 
     } catch (error) {
+
         alert(error.message);
+
     }
 
 });
@@ -310,7 +334,9 @@ async function loadAdminMachines() {
         );
 
     } catch (error) {
+
         alert(error.message);
+
     }
 
 }
