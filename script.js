@@ -568,13 +568,24 @@ async function loadStudents() {
 
         (result.students || []).forEach(student => {
             const card = document.createElement("div");
-
             card.className = "student-card";
 
-            card.textContent =
+            const info = document.createElement("div");
+            info.textContent =
                 student.student_name +
                 " | رقم: " + student.phone +
                 " | الغسلات: " + student.credits;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "حذف الطالب";
+            deleteBtn.style.background = "#dc3545";
+            deleteBtn.style.color = "white";
+            deleteBtn.style.marginTop = "10px";
+
+            deleteBtn.onclick = () => deleteStudent(student.id);
+
+            card.appendChild(info);
+            card.appendChild(deleteBtn);
 
             container.appendChild(card);
         });
@@ -746,6 +757,7 @@ async function loadSubscriptionPanel() {
     if (!adminPin) return;
 
     const panel = $("subscription-panel");
+    if (!panel) return;
 
     panel.innerHTML = `
         <h2>💳 إدارة الاشتراكات</h2>
@@ -764,14 +776,17 @@ async function loadSubscriptionPanel() {
 
         <h3>إعدادات الباقة الشهرية</h3>
 
+        <label for="package-price">سعر الاشتراك الشهري</label>
         <input id="package-price" type="number" min="0"
-            placeholder="سعر الاشتراك">
+            placeholder="أدخل سعر الاشتراك">
 
+        <label for="package-washes">عدد الغسلات في الشهر</label>
         <input id="package-washes" type="number" min="1"
-            placeholder="عدد الغسلات">
+            placeholder="أدخل عدد الغسلات">
 
+        <label for="package-days">مدة الاشتراك بالأيام</label>
         <input id="package-days" type="number" min="1"
-            placeholder="مدة الاشتراك">
+            placeholder="مثلاً 30 يوماً">
 
         <button id="save-package">حفظ الباقة</button>
 
@@ -879,16 +894,28 @@ async function loadSubscriptionRequests() {
             card.append(title, phone, price, washes, status);
 
             if (request.receipt_url) {
-                const link = document.createElement("a");
+    const image = document.createElement("img");
 
-                link.href = request.receipt_url;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                link.textContent = "📷 عرض سند الدفع";
+    image.src = request.receipt_url;
+    image.alt = "سند دفع الاشتراك";
 
-                card.appendChild(link);
+    image.style.width = "100%";
+    image.style.maxWidth = "300px";
+    image.style.display = "block";
+    image.style.margin = "12px 0";
+    image.style.borderRadius = "10px";
+    image.style.cursor = "pointer";
+
+    image.onclick = () => {
+        window.open(
+            request.receipt_url,
+            "_blank",
+            "noopener,noreferrer"
+        );
+    };
+
+    card.appendChild(image);
             }
-
             if (request.status === "pending") {
                 const approve = document.createElement("button");
 
