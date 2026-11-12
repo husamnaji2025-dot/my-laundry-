@@ -22,39 +22,23 @@
         </header>
 
         <main id="login-screen">
+    <h2>مرحباً بك في مغسلتي 🧺</h2>
+    <p>أدخل رقمك الطلابي للدخول</p>
 
-            <h2>مرحباً بك</h2>
-            <p>سجل دخولك باستخدام رقم هاتفك</p>
+    <input
+        type="text"
+        id="student-number"
+        placeholder="رقم الطالب"
+        inputmode="numeric"
+        dir="ltr"
+    >
 
-            <input
-                type="tel"
-                id="phone"
-                placeholder="+9677XXXXXXXX"
-                dir="ltr"
-            >
+    <button id="login-button">
+        دخول
+    </button>
 
-            <div id="recaptcha-container"></div>
-
-            <button id="send-code">
-                إرسال رمز التحقق
-            </button>
-
-            <div id="verification-section" hidden>
-                <input
-                    type="text"
-                    id="verification-code"
-                    placeholder="أدخل رمز التحقق"
-                    inputmode="numeric"
-                >
-
-                <button id="verify-code">
-                    تأكيد الدخول
-                </button>
-            </div>
-
-            <p id="message"></p>
-
-        </main>
+    <p id="message"></p>
+</main>
 
         <section id="student-dashboard" hidden>
             <h2>لوحة الطالب</h2>
