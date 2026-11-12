@@ -1,12 +1,20 @@
 * {
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
+    font-family: "Arial", sans-serif;
+}
+
+:root {
+    --primary: #087f8c;
+    --dark: #07545d;
+    --light: #e6f7f7;
+    --background: #f3f7fa;
+    --text: #1e293b;
 }
 
 body {
     margin: 0;
-    background: #f1f5f9;
-    color: #1e293b;
+    background: var(--background);
+    color: var(--text);
     direction: rtl;
 }
 
@@ -14,47 +22,66 @@ body {
     width: 100%;
     max-width: 500px;
     margin: auto;
-    padding: 20px;
+    padding: 18px;
 }
 
 header {
-    background: #087f8c;
+    background: linear-gradient(135deg, #07545d, #0b9ba5);
     color: white;
     text-align: center;
-    padding: 25px 15px;
-    border-radius: 18px;
-    margin-bottom: 25px;
+    padding: 32px 15px;
+    border-radius: 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 22px #087f8c35;
 }
 
 header h1 {
     margin: 0 0 10px;
-    font-size: 30px;
+    font-size: 32px;
+    font-weight: bold;
 }
 
 header p {
     margin: 0;
     font-size: 15px;
+    opacity: .9;
 }
 
 main,
-#student-dashboard {
+#student-dashboard,
+#admin-dashboard {
     background: white;
-    padding: 22px;
-    border-radius: 18px;
-    box-shadow: 0 4px 15px #0000000d;
+    padding: 23px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px #0000000b;
+    margin-bottom: 18px;
 }
 
-h2, h3 {
-    color: #087f8c;
+h2 {
+    color: var(--dark);
+    font-size: 23px;
+}
+
+h3 {
+    color: var(--primary);
 }
 
 input {
     width: 100%;
-    padding: 15px;
-    margin: 12px 0;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    padding: 16px;
+    margin: 10px 0;
+    border: 1px solid #dbe4e8;
+    border-radius: 12px;
     font-size: 16px;
+    background: #f8fafc;
+    outline: none;
+    transition: .2s;
+}
+
+input:focus {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 3px #087f8c18;
 }
 
 button {
@@ -62,15 +89,22 @@ button {
     padding: 15px;
     margin-top: 12px;
     border: none;
-    border-radius: 10px;
-    background: #087f8c;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #087f8c, #0b9ba5);
     color: white;
     font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
+    transition: .2s;
 }
 
 button:active {
-    opacity: 0.8;
+    transform: scale(.98);
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
 }
 
 #message {
@@ -80,14 +114,78 @@ button:active {
 }
 
 #credits {
-    background: #e0f2f1;
-    color: #087f8c;
+    background: var(--light);
+    color: var(--dark);
     text-align: center;
-    padding: 20px;
+    padding: 22px;
+    border-radius: 16px;
+    font-size: 38px;
+    font-weight: bold;
+    border: 1px solid #c9eeee;
+}
+
+.machine-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px;
+    margin: 14px 0;
+    box-shadow: 0 3px 12px #00000008;
+}
+
+.machine-card h3 {
+    margin-top: 0;
+    font-size: 19px;
+}
+
+.machine-card p {
+    color: #64748b;
+    font-size: 15px;
+}
+
+.machine-card button {
+    margin-top: 8px;
+}
+
+.laundry-timer {
+    background: #fff7e6;
+    color: #a16207 !important;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.student-card {
+    background: #f1f8f9;
+    border: 1px solid #d8eeee;
     border-radius: 12px;
-    font-size: 35px;
+    padding: 15px;
+    margin: 10px 0;
+    line-height: 1.8;
+}
+
+#logout,
+#admin-logout {
+    background: #64748b;
 }
 
 [hidden] {
     display: none !important;
+}
+
+@media (max-width: 380px) {
+    .app {
+        padding: 12px;
+    }
+
+    header h1 {
+        font-size: 27px;
+    }
+
+    main,
+    #student-dashboard,
+    #admin-dashboard {
+        padding: 17px;
+    }
 }
