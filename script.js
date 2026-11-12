@@ -244,6 +244,8 @@ async function bookMachine(machineId) {
 async function loadAdminData() {
     await loadStudents();
     await loadAdminMachines();
+    await loadReservations();
+    await loadSubscriptionPanel();
 }
 
 async function loadStudents() {
@@ -372,3 +374,306 @@ $("refresh-reservations").addEventListener(
     "click",
     loadReservations
 );
+$("refresh-reservations").addEventListener(
+    "click",
+    loadReservations
+);
+// ===============================
+// إدارة الاشتراكات والسداد والسندات
+// ===============================
+
+async function loadSubscriptionPanel() {
+    if (!adminPin) return;
+
+    let panel = $("subscription-panel");
+
+    if (!panel) {
+        panel = document.createElement("div");
+        panel.id = "subscription-panel";
+        adminDashboard.appendChild(panel);
+    }
+
+    panel.innerHTML = `
+        <h2>إدارة الاشتراكات</h2>
+
+        <h3>إعدادات الباقة الشهرية</h3>
+        <input id="package-price" type="number" placeholder="سعر الاشتراك">
+        <input id="package-washes" type="number" placeholder="عدد الغسلات">
+        <input id="package-days" type="number" value="30" placeholder="مدة الاشتراك">
+        <button id="save-package">حفظ الباقة</button>
+
+        <hr>
+
+        <h3>البحث عن طالب</h3>
+        <input id="subscription-search" placeholder="اسم الطالب أو رقم الهاتف">
+        <button id="search-subscription-student">بحث</button>
+        <div id="subscription-search-results"></div>
+
+        <hr>
+
+        <h3>الاشتراكات الحالية</h3>
+        <button id="refresh-subscriptions">تحديث الاشتراكات</button>
+        <div id="subscriptions-list"></div>
+
+        <hr>
+
+        <h3>سجل المدفوعات</h3>
+        <button id="refresh-payments">عرض المدفوعات</button>
+        <div id="payments-list"></div>
+    `;
+
+    $("save-package").onclick = saveSubscriptionPackage;
+    $("search-subscription-student").onclick = searchSubscriptionStudent;
+    $("refresh-subscriptions").onclick = loadSubscriptions;
+    $("refresh-payments").onclick = loadSubscriptionPayments;
+
+    await loadSubscriptionSettings();
+    await loadSubscriptions();
+}
+
+async function loadSubscriptionSettings() {
+    try {
+        const result = await api("get_subscription_settings", {
+            pin: adminPin
+        });
+
+        const s = result.settings;
+
+        $("package-price").value = s.monthly_price;
+        $("package-washes").value = s.monthly_washes;
+        $("package-days").value = s.duration_days;
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function saveSubscriptionPackage() {
+    try {
+        await api("update_subscription_settings", {
+            pin: adminPin,
+            monthly_price: Number($("package-price").value),
+            monthly_washes: Number($("package-washes").value),
+            duration_days: Number($("package-days").value)
+        });
+
+        alert("تم حفظ الباقة بنجاح");
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function searchSubscriptionStudent() {
+    const query = $("subscription-search").value.trim();
+
+    if (!query) {
+        alert("أدخل اسم الطالب أو رقم الهاتف");
+        return;
+    }
+
+    const container = $("subscription-search-results");
+    container.textContent = "جاري البحث...";
+
+    try {
+        const result = await api("search_student", {
+            pin: adminPin,
+            query
+        });
+
+        container.innerHTML = "";
+
+        if (!result.students.length) {
+            container.textContent = "لم يتم العثور على الطالب";
+            return;
+        }
+
+        result.students.forEach(student => {
+            const card = document.createElement("div");
+            card.className = "student-card";
+
+            const info = document.createElement("p");
+            info.textContent =
+                student.student_name + " | " +
+                student.phone + " | الرصيد: " +
+                student.credits;
+
+            const button = document.createElement("button");
+            button.textContent = "إنشاء اشتراك";
+            button.onclick = () => createStudentSubscription(student);
+
+            card.append(info, button);
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        container.textContent = error.message;
+    }
+}
+
+async function createStudentSubscription(student) {
+    const paid = prompt(
+        "أدخل المبلغ المدفوع الآن، أو اكتب 0 إذا لم يدفع"
+    );
+
+    if (paid === null) return;
+
+    try {
+        await api("create_subscription", {
+            pin: adminPin,
+            studentId: student.id,
+            paid_amount: Number(paid)
+        });
+
+        alert("تم إنشاء الاشتراك وإضافة الغسلات للطالب");
+
+        await loadStudents();
+        await loadSubscriptions();
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function loadSubscriptions() {
+    const container = $("subscriptions-list");
+    container.textContent = "جاري التحميل...";
+
+    try {
+        const result = await api("list_subscriptions", {
+            pin: adminPin
+        });
+
+        container.innerHTML = "";
+
+        result.subscriptions.forEach(s => {
+            const card = document.createElement("div");
+            card.className = "student-card";
+
+            const remaining = Number(s.price) - Number(s.paid_amount);
+
+            const info = document.createElement("p");
+            info.textContent =
+                (s.students?.student_name || "طالب") +
+                " | السعر: " + s.price +
+                " | المدفوع: " + s.paid_amount +
+                " | المتبقي: " + remaining +
+                " | ينتهي: " + new Date(s.end_date).toLocaleDateString();
+
+            card.appendChild(info);
+
+            if (remaining > 0) {
+                const button = document.createElement("button");
+                button.textContent = "تسديد وإرفاق السند";
+                button.onclick = () => addSubscriptionPayment(s);
+                card.appendChild(button);
+            }
+
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        container.textContent = error.message;
+    }
+}
+
+async function addSubscriptionPayment(subscription) {
+    const remaining =
+        Number(subscription.price) - Number(subscription.paid_amount);
+
+    const amount = prompt("المبلغ المتبقي: " + remaining + "\nأدخل مبلغ التسديد:");
+
+    if (amount === null) return;
+
+    const value = Number(amount);
+
+    if (!Number.isFinite(value) || value <= 0 || value > remaining) {
+        alert("المبلغ غير صحيح");
+        return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp";
+
+    input.onchange = async () => {
+        const file = input.files[0];
+
+        if (!file) {
+            alert("اختر صورة السند");
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert("حجم الصورة يجب ألا يتجاوز 5 ميجابايت");
+            return;
+        }
+
+        try {
+            const receiptBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            await api("add_subscription_payment", {
+                pin: adminPin,
+                subscriptionId: subscription.id,
+                amount: value,
+                receiptBase64,
+                receiptType: file.type
+            });
+
+            alert("تم تسجيل الدفعة وحفظ صورة السند بنجاح");
+
+            await loadSubscriptions();
+            await loadSubscriptionPayments();
+
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    input.click();
+}
+
+async function loadSubscriptionPayments() {
+    const container = $("payments-list");
+    container.textContent = "جاري التحميل...";
+
+    try {
+        const result = await api("list_subscription_payments", {
+            pin: adminPin
+        });
+
+        container.innerHTML = "";
+
+        result.payments.forEach(payment => {
+            const card = document.createElement("div");
+            card.className = "student-card";
+
+            const info = document.createElement("p");
+            info.textContent =
+                "المبلغ: " + payment.amount +
+                " | التاريخ: " +
+                new Date(payment.payment_date).toLocaleDateString();
+
+            card.appendChild(info);
+
+            if (payment.receipt_url) {
+                const link = document.createElement("a");
+                link.href = payment.receipt_url;
+                link.target = "_blank";
+                link.rel = "noopener";
+                link.textContent = "عرض صورة سند السداد";
+                card.appendChild(link);
+            }
+
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        container.textContent = error.message;
+    }
+                        }
