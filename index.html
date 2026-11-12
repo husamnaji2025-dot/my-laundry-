@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>مغسلتي | My Laundry</title>
 
     <link rel="stylesheet" href="style.css">
-
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 
 <body>
@@ -21,93 +19,109 @@
             <p>نظام إدارة الغسيل للسكن الطلابي</p>
         </header>
 
+        <!-- واجهة تسجيل دخول الطالب -->
         <main id="login-screen">
-    <h2>مرحباً بك في مغسلتي 🧺</h2>
-    <p>أدخل رقمك الطلابي للدخول</p>
 
-    <input
-        type="text"
-        id="student-number"
-        placeholder="رقم الطالب"
-        inputmode="numeric"
-        dir="ltr"
-    >
+            <h2>مرحباً بك في مغسلتي 🧺</h2>
 
-    <button id="login-button">
-        دخول
-    </button>
+            <p>أدخل رقمك الطلابي للدخول</p>
 
-    <p id="message"></p>
-</main>
+            <input
+                type="text"
+                id="student-number"
+                placeholder="رقم الطالب"
+                inputmode="numeric"
+                dir="ltr"
+            >
 
+            <button id="login-button" type="button">
+                دخول
+            </button>
+
+            <p id="message"></p>
+
+        </main>
+
+        <!-- لوحة الطالب -->
         <section id="student-dashboard" hidden>
+
             <h2>لوحة الطالب</h2>
+
             <p id="welcome"></p>
+
             <p>رصيد الغسلات المتبقي:</p>
+
             <h2 id="credits">0</h2>
 
             <h3>الغسالات</h3>
+
             <div id="washers"></div>
 
             <h3>المكاوي</h3>
+
             <div id="irons"></div>
 
-            <button id="logout">تسجيل الخروج</button>
+            <button id="logout" type="button">
+                تسجيل الخروج
+            </button>
+
         </section>
-<!-- لوحة المدير -->
-<section id="admin-dashboard" hidden>
 
-    <h2>لوحة إدارة مغسلتي 🛠️</h2>
+        <!-- لوحة المدير -->
+        <section id="admin-dashboard" hidden>
 
-    <h3>إضافة طالب جديد</h3>
+            <h2>لوحة إدارة مغسلتي 🛠️</h2>
 
-    <input
-        type="text"
-        id="student-name"
-        placeholder="اسم الطالب"
-    >
+            <h3>إضافة طالب جديد</h3>
 
-    <input
-        type="tel"
-        id="student-phone"
-        placeholder="+9677XXXXXXXX"
-        dir="ltr"
-    >
+            <input
+                type="text"
+                id="student-name"
+                placeholder="اسم الطالب"
+            >
 
-    <input
-        type="number"
-        id="student-credits"
-        placeholder="عدد الغسلات"
-        min="0"
-    >
+            <input
+                type="tel"
+                id="student-phone"
+                placeholder="+9677XXXXXXXX"
+                dir="ltr"
+            >
 
-    <button id="add-student">
-        إضافة الطالب
-    </button>
+            <input
+                type="number"
+                id="student-credits"
+                placeholder="عدد الغسلات"
+                min="0"
+            >
 
-    <hr>
+            <button id="add-student" type="button">
+                إضافة الطالب
+            </button>
 
-    <h3>إدارة الأجهزة</h3>
+            <hr>
 
-    <div id="admin-washers"></div>
+            <h3>إدارة الأجهزة</h3>
 
-    <div id="admin-irons"></div>
+            <div id="admin-washers"></div>
 
-    <hr>
+            <div id="admin-irons"></div>
 
-    <h3>الطلاب المسجلون</h3>
+            <hr>
 
-    <div id="students-list"></div>
+            <h3>الطلاب المسجلون</h3>
 
-    <button id="admin-logout">
-        تسجيل خروج المدير
-    </button>
+            <div id="students-list"></div>
 
-</section>
+            <button id="admin-logout" type="button">
+                تسجيل خروج المدير
+            </button>
+
+        </section>
+
     </div>
 
-    <script src="firebase-config.js"></script>
-    <script src="script.js"></script>
+    <!-- ملف JavaScript الرئيسي -->
+    <script src="script.js?v=3"></script>
 
 </body>
 </html>
