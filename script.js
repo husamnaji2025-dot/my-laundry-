@@ -16,7 +16,7 @@ const loginButton = document.getElementById("login-button");
 
 // رقم المدير المؤقت
 // غيّره إلى رقم خاص بك
-const ADMIN_NUMBER = "0000";
+const ADMIN_NUMBER = "2007";
 
 let currentStudent = null;
 let currentStudentNumber = null;
