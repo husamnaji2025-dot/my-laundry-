@@ -4,8 +4,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مغسلتي | My Laundry</title>
+    <meta name="theme-color" content="#00666b">
+    <title>مغسلتي | سكن بازرعة</title>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .brand-name {
+            color: #00666b;
+            font-weight: bold;
+        }
+
+        .receipt-box {
+            border: 2px dashed #aeb9bd;
+            border-radius: 20px;
+            padding: 30px 15px;
+            text-align: center;
+            background: #f7f9fa;
+            margin: 20px 0;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .receipt-box small {
+            display: block;
+            margin-top: 10px;
+            color: #68747a;
+            font-weight: normal;
+        }
+
+        .receipt-preview {
+            max-width: 100%;
+            max-height: 220px;
+            display: block;
+            margin: 15px auto;
+            border-radius: 12px;
+        }
+
+        .send-receipt {
+            background: #00666b;
+            color: white;
+            width: 65%;
+            padding: 15px;
+            border: none;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .cancel-receipt {
+            background: #737d85;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 40px;
+        }
+
+        .receipt-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .subscription-card {
+            background: #f7fafa;
+            border-radius: 16px;
+            padding: 18px;
+            margin: 15px 0;
+        }
+
+        .subscription-message {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
@@ -14,6 +87,7 @@
 
     <header>
         <h1>🧺 مغسلتي</h1>
+        <p class="brand-name">سكن بازرعة الخيري</p>
         <p>نظام إدارة الغسيل للسكن الطلابي</p>
     </header>
 
@@ -21,7 +95,6 @@
     <main id="login-screen">
 
         <h2>مرحباً بك في مغسلتي 🧺</h2>
-
         <p>أدخل رقم هاتفك للدخول</p>
 
         <input
@@ -44,11 +117,9 @@
     <section id="student-dashboard" hidden>
 
         <h2>لوحة الطالب</h2>
-
         <p id="welcome"></p>
 
         <h3>رصيد الغسلات المتبقي</h3>
-
         <h2 id="credits">0</h2>
 
         <hr>
@@ -58,7 +129,7 @@
 
             <h2>💳 اشتراكي</h2>
 
-            <div id="student-subscription-info">
+            <div id="student-subscription-info" class="subscription-card">
                 جاري تحميل بيانات الاشتراك...
             </div>
 
@@ -71,37 +142,74 @@
                     طلب اشتراك جديد
                 </button>
 
-                <input
-                    type="file"
-                    id="student-receipt"
-                    accept="image/jpeg,image/png,image/webp"
-                    hidden
-                >
+                <div id="student-receipt-area" hidden>
 
-                <button
-                    id="student-upload-receipt"
-                    type="button"
-                    hidden
-                >
-                    إرفاق سند الدفع
-                </button>
+                    <h3>تأكيد الاشتراك - باقة شهر كامل</h3>
+
+                    <p>
+                        الرجاء إرفاق صورة واضحة لسند الحوالة أو الإيداع،
+                        ليتم مراجعتها وتفعيل حسابك.
+                    </p>
+
+                    <input
+                        type="file"
+                        id="student-receipt"
+                        accept="image/jpeg,image/png,image/webp"
+                        hidden
+                    >
+
+                    <div
+                        class="receipt-box"
+                        id="receipt-picker"
+                    >
+                        📤 اضغط هنا لاختيار الصورة
+                        <small>JPG أو PNG أو WEBP</small>
+                    </div>
+
+                    <img
+                        id="receipt-preview"
+                        class="receipt-preview"
+                        hidden
+                        alt="معاينة السند"
+                    >
+
+                    <div class="receipt-actions">
+
+                        <button
+                            id="student-upload-receipt"
+                            class="send-receipt"
+                            type="button"
+                        >
+                            إرسال السند
+                        </button>
+
+                        <button
+                            id="cancel-receipt"
+                            class="cancel-receipt"
+                            type="button"
+                        >
+                            إلغاء
+                        </button>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <div id="student-subscription-message"></div>
+            <div
+                id="student-subscription-message"
+                class="subscription-message"
+            ></div>
 
         </section>
 
         <hr>
 
-        <!-- الغسالات -->
         <h3>الغسالات</h3>
-
         <div id="washers"></div>
 
-        <!-- المكاوي -->
         <h3>المكاوي</h3>
-
         <div id="irons"></div>
 
         <button id="logout" type="button">
@@ -114,6 +222,7 @@
     <section id="admin-dashboard" hidden>
 
         <h2>لوحة إدارة مغسلتي 🛠️</h2>
+        <p class="brand-name">سكن بازرعة الخيري</p>
 
         <h3>إضافة طالب جديد</h3>
 
@@ -144,15 +253,12 @@
         <hr>
 
         <h3>إدارة الأجهزة</h3>
-
         <div id="admin-washers"></div>
-
         <div id="admin-irons"></div>
 
         <hr>
 
         <h3>الطلاب المسجلون</h3>
-
         <div id="students-list"></div>
 
         <hr>
@@ -169,7 +275,6 @@
 
         <hr>
 
-        <!-- إدارة الاشتراكات -->
         <div id="subscription-panel"></div>
 
         <button id="admin-logout" type="button">
@@ -180,7 +285,7 @@
 
 </div>
 
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 
 </body>
 </html>
