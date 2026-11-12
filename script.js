@@ -346,13 +346,21 @@ async function loadReservations() {
             const card = document.createElement("div");
             card.className = "student-card";
 
-            card.textContent =
-                "رقم الحجز: " + r.id +
-                " | الطالب: " + (r.student_name || "غير معروف") +
-                " | الجهاز: " + (r.machine_name || "غير معروف") +
-                " | الحالة: " + r.status;
+            card.innerHTML = `
+    <p>رقم الحجز: ${r.id}</p>
+    <p>الطالب: ${r.students?.student_name || "غير معروف"}</p>
+    <p>الجهاز: ${r.machines?.name || "غير معروف"}</p>
+    <p>الحالة: ${r.status}</p>
+`;
 
-            container.appendChild(card);
+if (r.status === "active") {
+    const button = document.createElement("button");
+    button.textContent = "إنهاء الحجز";
+    button.onclick = () => finishReservation(r.id);
+    card.appendChild(button);
+}
+
+container.appendChild(card);
         });
 
     } catch (error) {
