@@ -135,12 +135,33 @@ function displayMachines(machines, washerId, ironId) {
         const card = document.createElement("div");
         card.className = "machine-card";
 
-        card.textContent =
-            machine.name + " : " +
-            (machine.status === "occupied" ? "مشغولة" : "متاحة");
+        const status = document.createElement("p");
+
+        status.textContent =
+            machine.status === "occupied" ? "مشغولة" : "متاحة";
+
+        card.innerHTML = `<h3>${machine.name}</h3>`;
+        card.appendChild(status);
 
         if (machine.type === "washer") {
+
+            if (
+                washerId === "washers" &&
+                machine.status === "available" &&
+                currentStudent
+            ) {
+                const button = document.createElement("button");
+                button.textContent = "احجز الغسالة";
+
+                button.addEventListener("click", () => {
+                    bookMachine(machine.id);
+                });
+
+                card.appendChild(button);
+            }
+
             $(washerId).appendChild(card);
+
         } else {
             $(ironId).appendChild(card);
         }
@@ -149,6 +170,46 @@ function displayMachines(machines, washerId, ironId) {
 
 }
 
+// =====================================
+// حجز غسالة
+// =====================================
+
+async function bookMachine(machineId) {
+
+    if (!currentStudent) return;
+
+    if (!confirm("هل تريد تأكيد حجز هذه الغسالة؟")) {
+        return;
+    }
+
+    try {
+
+        const result = await api("book_machine", {
+            studentId: currentStudent.id,
+            machineId: machineId
+        });
+
+        currentStudent.credits = result.credits;
+
+        $("credits").textContent = result.credits;
+
+        alert("تم الحجز بنجاح!");
+
+        const machines = await api("get_machines");
+
+        displayMachines(
+            machines.machines,
+            "washers",
+            "irons"
+        );
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
 // =====================================
 // لوحة المدير
 // =====================================
