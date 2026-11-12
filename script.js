@@ -369,7 +369,7 @@ async function loadStudentSubscription() {
 
         const settings = result.settings || {};
         const subscription = result.subscription;
-        const request = result.request;
+        const request = result.pending || result.request;
 
         let html = `
             <div>
