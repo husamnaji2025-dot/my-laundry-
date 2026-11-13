@@ -1244,7 +1244,24 @@ window.logout = function () {
 
     window.location.href = window.location.pathname;
 };
+// ==========================================
+// ربط أزرار تسجيل الخروج
+// ==========================================
 
+const adminLogoutButton = $("admin-logout");
+const studentLogoutButton = $("student-logout");
+
+if (adminLogoutButton) {
+    adminLogoutButton.addEventListener("click", function () {
+        window.logout();
+    });
+}
+
+if (studentLogoutButton) {
+    studentLogoutButton.addEventListener("click", function () {
+        window.logout();
+    });
+}
 // ==========================================
 // استعادة جلسة المدير أو الطالب
 // ==========================================
