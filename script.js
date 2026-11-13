@@ -1248,3 +1248,24 @@ $("admin-logout").addEventListener("click", logout);
 // ==========================================
 
 restoreStudentSession();
+(async function restoreAdminSession() {
+    const savedPin = sessionStorage.getItem("laundry_admin_pin");
+
+    if (!savedPin) return;
+
+    try {
+        await api("list_students", { pin: savedPin });
+
+        adminPin = savedPin;
+
+        loginScreen.hidden = true;
+        studentDashboard.hidden = true;
+        adminDashboard.hidden = false;
+
+        await loadAdminData();
+
+    } catch (error) {
+        sessionStorage.removeItem("laundry_admin_pin");
+        adminPin = null;
+    }
+})();
