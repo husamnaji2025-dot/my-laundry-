@@ -918,6 +918,14 @@ async function loadSubscriptionRequests() {
             card.append(title, phone, price, washes, status);
 
             if (request.receipt_url) {
+
+    const receiptBox = document.createElement("div");
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.textContent = "👁️ إظهار صورة السند";
+    toggleButton.className = "receipt-toggle";
+
     const image = document.createElement("img");
 
     image.src = request.receipt_url;
@@ -925,7 +933,7 @@ async function loadSubscriptionRequests() {
 
     image.style.width = "100%";
     image.style.maxWidth = "300px";
-    image.style.display = "block";
+    image.style.display = "none";
     image.style.margin = "12px 0";
     image.style.borderRadius = "10px";
     image.style.cursor = "pointer";
@@ -938,8 +946,16 @@ async function loadSubscriptionRequests() {
         );
     };
 
-    card.appendChild(image);
-            }
+    toggleButton.onclick = () => {
+        image.hidden = !image.hidden;
+        toggleButton.textContent = image.hidden
+            ? "👁️ إظهار صورة السند"
+            : "🙈 إخفاء صورة السند";
+    };
+
+    receiptBox.append(toggleButton, image);
+    card.appendChild(receiptBox);
+}
             if (request.status === "pending") {
                 const approve = document.createElement("button");
 
