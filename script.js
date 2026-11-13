@@ -1227,9 +1227,13 @@ async function loadSubscriptionPayments() {
 // تسجيل الخروج
 // ==========================================
 
-function logout() {
-    clearInterval(refreshTimer);
-    clearInterval(countdownTimer);
+window.logout = function () {
+    try {
+        clearInterval(refreshTimer);
+        clearInterval(countdownTimer);
+    } catch (e) {
+        console.log(e);
+    }
 
     localStorage.removeItem("laundry_student_phone");
     sessionStorage.removeItem("laundry_admin_pin");
@@ -1238,8 +1242,8 @@ function logout() {
     currentPhone = null;
     adminPin = null;
 
-    location.reload();
-}
+    window.location.href = window.location.pathname;
+};
 
 // ==========================================
 // استعادة جلسة المدير أو الطالب
