@@ -4,7 +4,7 @@
 
 const API_URL = "https://pathkcnviuwqaljpvjbn.supabase.co/functions/v1/super-function";
 const SUPABASE_KEY = "sb_publishable_IO9zpRCSMDdMU0wH0QuVeA_xkFzXDP_";
-
+alert("ملف JavaScript يعمل");
 let currentStudent = null;
 let adminPin = null;
 let currentPhone = null;
