@@ -1248,7 +1248,7 @@ window.logout = function () {
 // ==========================================
 
 const adminLogoutButton = $("admin-logout");
-const studentLogoutButton = $("student-logout");
+const studentLogoutButton = $("logout");
 
 if (adminLogoutButton) {
     adminLogoutButton.addEventListener("click", function () {
