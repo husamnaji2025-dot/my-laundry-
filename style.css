@@ -189,3 +189,10 @@ button:disabled {
         padding: 17px;
     }
 }
+.brand-name {
+    font-size: 24px;
+    font-weight: 900;
+    color: #ffffff;
+    margin: 12px 0;
+    letter-spacing: 1px;
+}
