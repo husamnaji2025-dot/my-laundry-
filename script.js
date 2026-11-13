@@ -1240,6 +1240,8 @@ function logout() {
 
     location.reload();
 }
+document.getElementById("admin-logout").addEventListener("click", logout);
+
 // ==========================================
 // استعادة جلسة المدير أو الطالب
 // ==========================================
