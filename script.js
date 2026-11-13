@@ -4,7 +4,6 @@
 
 const API_URL = "https://pathkcnviuwqaljpvjbn.supabase.co/functions/v1/super-function";
 const SUPABASE_KEY = "sb_publishable_IO9zpRCSMDdMU0wH0QuVeA_xkFzXDP_";
-
 let currentStudent = null;
 let adminPin = null;
 let currentPhone = null;
@@ -116,7 +115,7 @@ async function loginStudent(phone, saveSession = true) {
 // تسجيل الدخول
 // ==========================================
 
-$("login-button").addEventListener("click", async () => { alert("تم الضغط على زر الدخول");
+$("login-button").addEventListener("click", async () => { 
     const number = $("student-number").value.trim();
 
     if (!number) {
