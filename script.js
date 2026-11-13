@@ -136,7 +136,7 @@ $("login-button").addEventListener("click", async () => {
             await api("list_students", { pin });
 
             adminPin = pin;
-
+sessionStorage.setItem("laundry_admin_pin", pin);
             localStorage.removeItem("laundry_student_phone");
 
             loginScreen.hidden = true;
@@ -1232,6 +1232,7 @@ function logout() {
     clearInterval(countdownTimer);
 
     localStorage.removeItem("laundry_student_phone");
+    sessionStorage.removeItem("laundry_admin_pin");
 
     currentStudent = null;
     currentPhone = null;
@@ -1239,33 +1240,41 @@ function logout() {
 
     location.reload();
 }
-
-$("logout").addEventListener("click", logout);
-$("admin-logout").addEventListener("click", logout);
-
 // ==========================================
 // استعادة الجلسة عند فتح الصفحة
 // ==========================================
 
-restoreStudentSession();
-(async function restoreAdminSession() {
+// ==========================================
+// استعادة جلسة المدير أو الطالب
+// ==========================================
+
+(async function restoreSession() {
+
     const savedPin = sessionStorage.getItem("laundry_admin_pin");
 
-    if (!savedPin) return;
+    // استعادة جلسة المدير أولاً
+    if (savedPin) {
+        try {
+            await api("list_students", { pin: savedPin });
 
-    try {
-        await api("list_students", { pin: savedPin });
+            adminPin = savedPin;
 
-        adminPin = savedPin;
+            loginScreen.hidden = true;
+            studentDashboard.hidden = true;
+            adminDashboard.hidden = false;
 
-        loginScreen.hidden = true;
-        studentDashboard.hidden = true;
-        adminDashboard.hidden = false;
+            await loadAdminData();
 
-        await loadAdminData();
+            return;
 
-    } catch (error) {
-        sessionStorage.removeItem("laundry_admin_pin");
-        adminPin = null;
+        } catch (error) {
+            sessionStorage.removeItem("laundry_admin_pin");
+            adminPin = null;
+            console.log("تعذرت استعادة جلسة المدير:", error.message);
+        }
     }
+
+    // إذا لم توجد جلسة مدير، استعد جلسة الطالب
+    await restoreStudentSession();
+
 })();
