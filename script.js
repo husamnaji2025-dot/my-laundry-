@@ -117,7 +117,7 @@ async function loginStudent(phone, saveSession = true) {
 // تسجيل الدخول
 // ==========================================
 
-$("login-button").addEventListener("click", async () => {
+$("login-button").addEventListener("click", async () => { alert("تم الضغط على زر الدخول");
     const number = $("student-number").value.trim();
 
     if (!number) {
