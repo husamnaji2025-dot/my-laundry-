@@ -594,7 +594,31 @@ async function loadStudents() {
         alert(error.message);
     }
 }
+// ==========================================
+// حذف طالب
+// ==========================================
 
+async function deleteStudent(studentId) {
+    const confirmed = confirm(
+        "هل أنت متأكد من حذف هذا الطالب؟ سيتم حذف بياناته المرتبطة به."
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const result = await api("delete_student", {
+            pin: adminPin,
+            studentId: studentId
+        });
+
+        alert(result.message || "تم حذف الطالب بنجاح");
+
+        await loadStudents();
+
+    } catch (error) {
+        alert("تعذر حذف الطالب: " + error.message);
+    }
+}
 // ==========================================
 // إضافة طالب
 // ==========================================
